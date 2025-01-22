@@ -20,3 +20,14 @@ tutorial project. You will see login there.
 * **Inspect data stream**: https://esjewett.github.io/wm-eventsource-demo/ 
 
 ### Continue...
+
+
+### Environment
+Set variables or get the default
+```commandline
+KAFKA_BOOTSTRAP_SERVERS
+SCHEMA_REGISTRY_URL
+WIKIMEDIA_STREAM_URL
+```
+
+you can see examples in the dataclasses added in config.  
