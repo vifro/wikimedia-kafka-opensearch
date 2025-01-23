@@ -1,33 +1,49 @@
-# Wikimedia Kafka Opensearch
-Test project for running kafka cluster on the real time open source streaming 
-data from wikimedia. So the main parts of the project is
-1. **wikimedia** -> **Kafka Connect** SSE (Source Connector)
-2. **Kafka Streams** Counter for statistics
-3. **Kafka Connect** Elasticsearch Sink -> Opensearch
-## Pre-req
-1. Kotlin with a compatible gradle version
-2. Docker installed (docker-compose in  conduktor platoform)
+# Wikimedia Kafka OpenSearch Pipeline
 
-## Monitoring
-When docker in running all the services. Go to  
-* **localhost:8080** and login to the conduktor console. 
+Real-time data pipeline processing Wikimedia stream data using Kafka and OpenSearch.
 
-platform-config.yaml is included since this is a local versiona and 
-tutorial project. You will see login there. 
+## Architecture
+1. Wikimedia → Kafka Connect (Source)
+2. Kafka Streams (Statistics)
+3. Kafka Connect → OpenSearch (Sink)
 
-## Wikimedia 
-* **Source**: https://stream.wikimedia.org/v2/stream/recentchange
-* **Inspect data stream**: https://esjewett.github.io/wm-eventsource-demo/ 
+## Prerequisites
+- Kotlin & Gradle
+- Docker with docker-compose
+- Running services:
+- Producer: `services/conduktor-platform/docker-compose.yaml`
+- Consumer: `services/open-search/docker-compose.yaml`
 
-### Continue...
-
-
-### Environment
-Set variables or get the default
+## Environment Variables
 ```commandline
 KAFKA_BOOTSTRAP_SERVERS
 SCHEMA_REGISTRY_URL
 WIKIMEDIA_STREAM_URL
 ```
 
-you can see examples in the dataclasses added in config.  
+Default values in config classes.
+
+## Services
+
+### Producer
+- Data Source: [Wikimedia Stream](https://stream.wikimedia.org/v2/stream/recentchange)
+- Demo: [Event Source Demo](https://esjewett.github.io/wm-eventsource-demo/)
+
+### Monitoring
+- Conduktor Console: `localhost:8080`
+   - Credentials in platform-config.yaml
+- OpenSearch: `localhost:9200`
+
+### Consumer
+[TBD]
+
+## Project Structure
+Single module approach chosen for tutorial simplicity.
+
+## Setup & Running
+1. Start required Docker services
+2. Configure environment variables (optional)
+3. Run producer/consumer applications
+
+## Development
+[Future development instructions]

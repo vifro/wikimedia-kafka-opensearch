@@ -1,6 +1,6 @@
 package producer.wikimedia
 
-import KafkaConfig
+import KafkaProducerConfig
 import com.launchdarkly.eventsource.EventSource
 
 import config.WikimediaConfig
@@ -11,12 +11,12 @@ import java.util.concurrent.TimeUnit
 
 
 class WikimediaEventProducer(
-    private val kafkaConfig: KafkaConfig,
+    private val kafkaProducerConfig: KafkaProducerConfig,
     private val wikimediaConfig: WikimediaConfig,
     private val produceDurationMinutes: Long = 10
 ) {
     fun start() {
-        val producer = KafkaProducer<String, String>(kafkaConfig.toProperties())
+        val producer = KafkaProducer<String, String>(kafkaProducerConfig.toProperties())
         val eventHandler = WikimediaChangeHandler(producer, TOPIC_NAME)
 
         val eventSource = EventSource.Builder(eventHandler, URI.create(wikimediaConfig.wikimediaStreamUrl))
@@ -35,7 +35,7 @@ class WikimediaEventProducer(
 
 fun main() {
     WikimediaEventProducer(
-        kafkaConfig = KafkaConfig(),
+        kafkaProducerConfig = KafkaProducerConfig(),
         wikimediaConfig = WikimediaConfig()
     ).start()
 }

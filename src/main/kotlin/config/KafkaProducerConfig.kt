@@ -3,7 +3,7 @@ import org.apache.kafka.common.serialization.StringSerializer
 import java.util.*
 
 
-data class KafkaConfig(
+data class KafkaProducerConfig(
     val bootstrapServers: String = System.getenv("KAFKA_BOOTSTRAP_SERVERS") ?: "127.0.0.1:9092",
     val schemaRegistryUrl: String = System.getenv("SCHEMA_REGISTRY_URL") ?: "http://schema-registry:8081"
 ) {
