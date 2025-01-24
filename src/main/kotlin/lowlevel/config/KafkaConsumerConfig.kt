@@ -17,5 +17,8 @@ data class KafkaConsumerConfig(
         setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.qualifiedName)
         setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
         setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+
+        // This means that you have to handle commit manually ( i.e  Batch programmatically)
+        setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
     }
 }

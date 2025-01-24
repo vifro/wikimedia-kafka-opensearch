@@ -1,10 +1,9 @@
-package producer.wikimedia
+package lowlevel.producer
 
 import KafkaProducerConfig
 import com.launchdarkly.eventsource.EventSource
 
-import config.WikimediaConfig
-import jdk.jfr.Event
+import lowlevel.config.WikimediaConfig
 import org.apache.kafka.clients.producer.KafkaProducer
 import java.net.URI
 import java.util.concurrent.TimeUnit

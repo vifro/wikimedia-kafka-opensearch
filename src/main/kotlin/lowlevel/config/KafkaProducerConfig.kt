@@ -26,7 +26,7 @@ data class KafkaProducerConfig(
          *      * Compression: Snappy , good for text and json.
          */
         setProperty(ProducerConfig.LINGER_MS_CONFIG, "20")
-        setProperty(ProducerConfig.BATCH_SIZE_CONFIG, (1024*32).toString())
+        setProperty(ProducerConfig.BATCH_SIZE_CONFIG, (1024 * 32).toString())
         setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, CompressionType.SNAPPY.toString())
 
 
@@ -39,6 +39,7 @@ data class KafkaProducerConfig(
 enum class CompressionType {
     // Best practise to set compression level at the producer level. Which is the default.
     PRODUCER, NONE, LZ4, SNAPPY;
+
     override fun toString(): String = when (this) {
         PRODUCER -> "producer"
         NONE -> "none"

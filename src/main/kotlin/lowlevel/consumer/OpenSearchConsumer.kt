@@ -1,11 +1,13 @@
-package consumer.opensearch
+package lowlevel.consumer
 
 import KafkaConsumerConfig
-import database.OpenSearchClient
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import lowlevel.database.OpenSearchClient
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.WakeupException
-import org.opensearch.common.xcontent.XContentType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -14,6 +16,7 @@ class OpenSearchConsumer(
     kafkaConsumerConfig: KafkaConsumerConfig,
     val openSearchClient: OpenSearchClient,
 ) : AutoCloseable {
+    private val gson = Gson()
     val consumer = KafkaConsumer<String, String>(kafkaConsumerConfig.toProperties())
 
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -23,10 +26,14 @@ class OpenSearchConsumer(
     fun subscribe(topicNames: List<String>, openSearchIndex: String) {
         try {
             consumer.subscribe(topicNames)
+
             while (isRunning) {
                 log.info("Polling")
-                val records = consumer.poll(Duration.ofMillis(1000))
-                processRecords(records, openSearchIndex)
+
+                val records = consumer.poll(Duration.ofSeconds(2))
+                log.info("Number of records read: ${records.count()}")
+                processRecordsInBulk(records, openSearchIndex)
+                Thread.sleep(2000)
             }
         } catch (e: WakeupException) {
             log.info("Consumer is starting to shut down")
@@ -42,12 +49,49 @@ class OpenSearchConsumer(
         openSearchIndex: String
     ) {
         records.forEach { record ->
-            val response = openSearchClient.indexDocument(
-                openSearchIndex,
-                record.value(),
-                XContentType.JSON
-            )
+            val id = extractId(record.value())
+            val wikimediaData = gson.fromJson(record.value(), JsonObject::class.java)
+            val indexDoc = JsonObject().apply {
+                addProperty("title", wikimediaData.get("title")?.asString)
+                addProperty("user", wikimediaData.get("user")?.asString)
+                addProperty("timestamp", wikimediaData.get("timestamp")?.asString)
+                addProperty("type", wikimediaData.get("type")?.asString)
+                // Add other relevant fields if needed.
+            }
+            openSearchClient.indexDocument(openSearchIndex, gson.toJson(indexDoc), id = id)
         }
+    }
+
+    private fun processRecordsInBulk(
+        records: ConsumerRecords<String, String>,
+        openSearchIndex: String
+    ) {
+        records.takeUnless { it.isEmpty }?.let { validRecords ->
+            validRecords.map { record ->
+                extractId(record.value()) to record.value().let { value ->
+                    gson.fromJson(value, JsonObject::class.java).toIndexDoc()
+                }
+            }.also { requests ->
+                openSearchClient.bulkIndex(openSearchIndex, requests)
+                consumer.commitAsync()
+            }
+        }
+    }
+
+    private fun JsonObject.toIndexDoc() = JsonObject().apply {
+        addProperty("title", get("title")?.asString)
+        addProperty("user", get("user")?.asString)
+        addProperty("timestamp", get("timestamp")?.asString)
+        addProperty("type", get("type")?.asString)
+    }.toString()
+
+    private fun extractId(json: String): String {
+        return JsonParser.parseString(json)
+            .asJsonObject
+            .get("meta")
+            .asJsonObject
+            .get("id")
+            .asString ?: "No value"
     }
 
     fun registerShutdownHook() {
@@ -85,24 +129,21 @@ class OpenSearchConsumer(
 }
 
 fun main() {
-    println("Running")
-    // First create openSearch Client
     val topicName = listOf("wikimedia.recentchange")
-
     val openSearchClient = OpenSearchClient()
     val elasticIndex = "wikimedia-recent-change"
 
-    // create index and insert some data.
+    // create index if not already existing (Should not be done by the consumer).
     openSearchClient.createIndex(elasticIndex)
-    openSearchClient.indexDocument(elasticIndex, """{"Description": "This is a test"}""")
 
     try {
-        val consumer = OpenSearchConsumer(
+        OpenSearchConsumer(
             KafkaConsumerConfig(),
             openSearchClient
-        )
-        consumer.subscribe(topicName, elasticIndex)
-
+        ).use { consumer ->
+            consumer.registerShutdownHook()
+            consumer.subscribe(topicName, elasticIndex)
+        }
     } catch (e: Exception) {
         throw e
     } finally {

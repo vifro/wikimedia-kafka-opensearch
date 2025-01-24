@@ -1,4 +1,4 @@
-package producer.wikimedia
+package lowlevel.producer
 
 import com.launchdarkly.eventsource.EventHandler
 import com.launchdarkly.eventsource.MessageEvent

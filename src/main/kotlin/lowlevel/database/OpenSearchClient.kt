@@ -1,4 +1,4 @@
-package database
+package lowlevel.database
 
 import org.apache.http.HttpHost
 import org.opensearch.action.bulk.BulkRequest
@@ -28,6 +28,7 @@ class OpenSearchClient(
 
     fun createIndex(index: String, settings: String? = null) {
         if (!indexExists(index)) {
+            // Important: Fast fix for indexing everything and not throwing errors when udnerlying data changes.
             val dynamicMapping = """
         {
           "mappings": {
@@ -35,18 +36,17 @@ class OpenSearchClient(
             "properties": {}
           }
         }"""
-
             val request = CreateIndexRequest(index)
             request.source(settings ?: dynamicMapping, XContentType.JSON)
             client.indices().create(request, RequestOptions.DEFAULT)
         }
     }
 
-    fun indexDocument(index: String, document: String, xContentType: XContentType = XContentType.JSON) {
+    fun indexDocument(index: String, document: String, xContentType: XContentType = XContentType.JSON, id: String?) {
         if (!indexExists(index)) {
             throw IllegalStateException("Index $index does not exist. Create it first.")
         }
-        val request = IndexRequest(index).source(document, xContentType)
+        val request = IndexRequest(index).source(document, xContentType).id(id)
         client.index(request, RequestOptions.DEFAULT)
     }
 
@@ -54,13 +54,17 @@ class OpenSearchClient(
         val request = GetIndexRequest(index)
         return client.indices().exists(request, RequestOptions.DEFAULT)
     }
-    fun bulkIndex(index: String, documents: List<String>) {
-        val bulkRequest = BulkRequest()
-        documents.forEach { doc ->
-            bulkRequest.add(
-                IndexRequest(index).source(doc, XContentType.JSON)
-            )
-        }
+
+    fun bulkIndex(
+        index: String,
+        documents: List<Pair<String, String>>,
+        xContentType: XContentType = XContentType.JSON
+    ) {
+        val bulkRequest = BulkRequest().add(
+            documents.map { (id, doc) ->
+                IndexRequest(index).source(doc, xContentType).id(id)
+            }
+        )
         client.bulk(bulkRequest, RequestOptions.DEFAULT)
     }
 
