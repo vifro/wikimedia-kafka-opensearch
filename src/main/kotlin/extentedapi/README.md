@@ -31,3 +31,5 @@ connect-standalone connect-standalone.properties elasticsearch.properties
 
 > **_EXTRAS:_** With sink error, try the following.  https://github.com/dmathieu/kafka-connect-opensearch
 
+# Streams - Check the subfolder 
+for processes on streams.
