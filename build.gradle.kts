@@ -20,6 +20,10 @@ dependencies {
     // https://mvnrepository.com/artifact/org.opensearch.client/opensearch-rest-high-level-client/1.2.4
     implementation("org.opensearch.client", "opensearch-rest-high-level-client","1.2.4")
     implementation("com.google.code.gson", "gson", "2.9.1")
+
+    // For streams
+    implementation("org.apache.kafka", "kafka-streams", "3.3.1")
+    implementation("com.fasterxml.jackson.core", "jackson-databind", "2.13.1")
 }
 
 tasks.test {
